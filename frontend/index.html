@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🧠 AI Image Generator</title>
+</head>
+<body>
+  <h1>🧠 AI Image Generator</h1>
+  <form id="generate-form">
+    <label>Enter Prompt:</label>
+    <input type="text" id="prompt" required><br><br>
+
+    <button type="submit">Generate</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('generate-form');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prompt = document.getElementById('prompt').value;
+
+      status.innerText = '⏳ Generating image...';
+      result.innerHTML = '';
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await response.json();
+
+        if (data.image_url) {
+          status.innerText = '✅ Image generated!';
+          result.innerHTML = `<img src="${data.image_url}" alt="Generated Image" style="max-width: 100%;"/>`;
+        } else {
+          status.innerText = '❌ Failed to generate image.';
+        }
+      } catch (err) {
+        console.error(err);
+        status.innerText = '❌ Error connecting to the backend.';
+      }
+    });
+  </script>
+</body>
+</html>
