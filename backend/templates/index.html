@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Interior Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #e0eafc, #cfdef3);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeInBody 1s ease-in-out;
+        }
+
+        @keyframes fadeInBody {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        header {
+            background-color: #4B79A1;
+            color: white;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            margin-top: 3rem;
+            padding: 2.5rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="file"]:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(75, 121, 161, 0.5);
+        }
+
+        button {
+            background-color: #4B79A1;
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #365d7f;
+            transform: scale(1.05);
+        }
+
+        #result {
+            margin-top: 2rem;
+            min-height: 200px;
+        }
+
+        #result img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            animation: fadeInImage 0.7s ease-in-out;
+        }
+
+        @keyframes fadeInImage {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .loading-bar-container {
+            width: 100%;
+            background-color: #eee;
+            height: 6px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #4B79A1, #5e9bd3);
+            animation: loadingAnim 2s ease-in-out infinite;
+        }
+
+        @keyframes loadingAnim {
+            0% { width: 0%; }
+            50% { width: 80%; }
+            100% { width: 0%; }
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+            animation: fadeInBody 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><i class="fas fa-couch"></i> AI Interior Designer</h1>
+</header>
+
+<div class="container">
+    <div class="input-group">
+        <label for="prompt">Design Prompt</label>
+        <input type="text" id="prompt" placeholder="e.g., Modern minimalistic living room with wood accents" />
+    </div>
+    <div class="input-group">
+        <label for="imageInput">Upload Room Image (optional)</label>
+        <input type="file" id="imageInput" />
+    </div>
+    <button id="generateBtn"><i class="fas fa-magic"></i> Generate Design</button>
+
+    <div id="result">
+        <div class="loading-bar-container" id="loadingBarContainer" style="display: none;">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy;  • Powered by AI • Designed by Saurav
+</footer>
+
+<script>
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+        const formData = new FormData();
+        const prompt = document.getElementById("prompt").value;
+        const imageInput = document.getElementById("imageInput");
+        const resultDiv = document.getElementById("result");
+        const loadingBarContainer = document.getElementById("loadingBarContainer");
+
+        if (!prompt.trim()) {
+            alert("Please enter a prompt.");
+            return;
+        }
+
+        formData.append("prompt", prompt);
+        if (imageInput.files.length > 0) {
+            formData.append("image", imageInput.files[0]);
+        }
+
+        // Show loading bar
+        loadingBarContainer.style.display = "block";
+        resultDiv.querySelector("img")?.remove();
+
+        try {
+            const response = await fetch("/generate", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            loadingBarContainer.style.display = "none";
+
+            if (response.ok) {
+                resultDiv.innerHTML = `
+                    <div class="loading-bar-container" style="display: none;"></div>
+                    <img src="${data.image_url}" alt="Generated Room Design" />
+                `;
+            } else {
+                resultDiv.innerHTML = `<p>${data.error || "Server error."}</p>`;
+            }
+        } catch (error) {
+            console.error("JS Error:", error);
+            loadingBarContainer.style.display = "none";
+            resultDiv.innerHTML = `<p>JS/Network error.</p>`;
+        }
+    });
+</script>
+
+</body>
+</html>
